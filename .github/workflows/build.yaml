@@ -3,12 +3,12 @@ name: BUILD
 on:
   push:
     branches:
-      - "**"
+      - '**'
     paths:
-      - "*.go"
-      - "go.mod"
-      - "Makefile"
-      - ".github/workflows/build.yaml"
+      - '*.go'
+      - 'go.mod'
+      - 'Makefile'
+      - '.github/workflows/build.yaml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
