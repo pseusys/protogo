@@ -1,9 +1,9 @@
 # protogo
 
+> This package is not in any way related to the `protobuf` developers and/or maintainers!
+
 [![BUILD](https://github.com/pseusys/protogo/actions/workflows/build.yaml/badge.svg)](https://github.com/pseusys/protogo/actions/workflows/build.yaml)
 [![PUBLISH](https://github.com/pseusys/protogo/actions/workflows/publish.yaml/badge.svg)](https://github.com/pseusys/protogo/actions/workflows/publish.yaml)
-
-> Originally, a part of [`SeasideVPN`](https://github.com/pseusys/SeasideVPN) project.
 
 `protogo` is an automatization tool for Go + protobuf + gRPC builds!
 
@@ -17,9 +17,10 @@ protogo version -- --version
 Both parts are optional and can be skipped, thus can be used as `protoc` installer.
 Protoc executable will be placed into `${PROTOGO_CACHE}/protoc-${PROTOGO_PROTOC_VERSION}/bin`, this directory can be added to `$PATH`.
 
-
 Protogo will handle everything else, including `protoc` binaries installation, installing required packages, etc.
 Use [official gRPC installation guide](https://grpc.io/docs/languages/go/quickstart/#prerequisites) as reference.
+
+> Originally, a part of [`SeasideVPN`](https://github.com/pseusys/SeasideVPN) project.
 
 Inspired by similar projects for other languages, including (but not limited to) [`protoc-exe`](https://pypi.org/project/protoc-exe/) and [`protoc-prebuilt`](https://crates.io/crates/protoc-prebuilt/).
 
