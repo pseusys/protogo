@@ -7,6 +7,7 @@ on:
     paths:
       - "*.go"
       - "go.mod"
+      - "Makefile"
       - ".github/workflows/build.yaml"
 
 concurrency:

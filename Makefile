@@ -11,6 +11,7 @@ PROTOGO_ARGS := ${GO_ARGS} -- ${PROTOC_ARGS}
 
 build:
 	@ # Run 'protogo' locally
+	go mod tidy
 	go build -o build/protogo .
 .PHONY: build
 
