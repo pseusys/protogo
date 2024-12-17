@@ -15,12 +15,12 @@ func extractFile(reader io.ReadCloser, file *zip.File, path string) error {
 		fdir = path[:lastIndex]
 	}
 
-	err := os.MkdirAll(fdir, file.Mode())
+	err := os.MkdirAll(fdir, FULL_PERMISSIONS)
 	if err != nil {
 		return fmt.Errorf("error making directory %s: %v", fdir, err)
 	}
 
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FULL_PERMISSIONS)
 	if err != nil {
 		return fmt.Errorf("error opening file %s: %v", path, err)
 	} else {
@@ -46,7 +46,7 @@ func extractItem(file *zip.File, dest string) error {
 	fpath := filepath.Join(dest, file.Name)
 
 	if file.FileInfo().IsDir() {
-		err = os.MkdirAll(fpath, file.Mode())
+		err = os.MkdirAll(fpath, FULL_PERMISSIONS)
 		if err != nil {
 			return fmt.Errorf("error making directory %s: %v", fpath, err)
 		}

@@ -15,6 +15,7 @@ import (
 const (
 	GO_EXECUTABLE     = "go"
 	PROTOC_EXECUTABLE = "protoc"
+	FULL_PERMISSIONS  = 0775
 )
 
 func lookupGoEnv(goExecuteble, key string) (string, bool) {
@@ -79,7 +80,7 @@ func getEnvCacheDir(key string) (*string, error) {
 	}
 
 	logrus.Debugf("Creating cache dir: %s", cacheDir)
-	err := os.MkdirAll(cacheDir, 0775)
+	err := os.MkdirAll(cacheDir, FULL_PERMISSIONS)
 	if err != nil {
 		return nil, fmt.Errorf("could not create cache directory in '~/.cache' root: %v", err)
 	} else {
