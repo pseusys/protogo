@@ -1,0 +1,25 @@
+name: PUBLISH
+
+on:
+  push:
+    tags:
+      - "**"
+
+jobs:
+  list-package:
+    name: List Package To GO Package Registry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Go 1.22 🦫
+        uses: actions/setup-go@v5
+        with:
+          go-version: "^1.22.10"
+
+      - name: List Protogo 📙
+        env:
+          GOPROXY: proxy.golang.org
+        run: go list -m github.com/pseusys/protogo@${{ github.ref_name }}

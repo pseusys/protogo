@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "**"
+    paths:
+      - "*.go"
+      - "go.mod"
+      - ".github/workflows/build.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
