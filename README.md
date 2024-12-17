@@ -1,5 +1,8 @@
 # protogo
 
+[![BUILD](https://github.com/pseusys/protogo/actions/workflows/build.yaml/badge.svg)](https://github.com/pseusys/protogo/actions/workflows/build.yaml)
+[![PUBLISH](https://github.com/pseusys/protogo/actions/workflows/publish.yaml/badge.svg)](https://github.com/pseusys/protogo/actions/workflows/publish.yaml)
+
 > Originally, a part of [`SeasideVPN`](https://github.com/pseusys/SeasideVPN) project.
 
 `protogo` is an automatization tool for Go + protobuf + gRPC builds!

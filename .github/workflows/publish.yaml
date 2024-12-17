@@ -22,4 +22,6 @@ jobs:
       - name: List Protogo 📙
         env:
           GOPROXY: proxy.golang.org
-        run: go list -m github.com/pseusys/protogo@${{ github.ref_name }}
+        run: |
+          go mod tidy
+          go list -m github.com/pseusys/protogo@${{ github.ref_name }}
