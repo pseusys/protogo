@@ -1,6 +1,6 @@
 module github.com/pseusys/protogo
 
-go 1.23.4
+go 1.22.10
 
 require github.com/sirupsen/logrus v1.9.3
 

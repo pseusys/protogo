@@ -1,0 +1,34 @@
+name: BUILD
+
+on:
+  push:
+    branches:
+      - "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-protogo:
+    name: Test Protogo Across Different Architectures
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows", "linux", "macos"]
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Go 1.22 🦫
+        uses: actions/setup-go@v5
+        with:
+          go-version: "^1.22.10"
+
+      - name: Build Protogo 🏗️
+        run: make build
+
+      - name: Run Protogo 🚀
+        run: make run

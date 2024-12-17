@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -135,6 +136,7 @@ func ensureGoPackageInstalled(goExecuteble, goBin, packagePrefix, packageName st
 	packageUrl := fmt.Sprintf("%s/%s@latest", packagePrefix, packageName)
 	logrus.Debugf("Package %s is not installed, installing latest version from: %s", packageName, packageUrl)
 	cmd := exec.Command(goExecuteble, "install", packageUrl)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%s", runtime.GOOS), fmt.Sprintf("GOARCH=%s", runtime.GOARCH))
 	output, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("error installing package %s: %v\n%s", packageName, err, string(output))
