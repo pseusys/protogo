@@ -147,7 +147,7 @@ func main() {
 	if len(protocArgs) > 0 {
 		logrus.Debugf("Running protoc command: %s %v", protocExecutable, protocArgs)
 		protocCmd := exec.Command(protocExecutable, protocArgs...)
-		protocCmd.Env = append(protocCmd.Env, protocPath)
+		protocCmd.Env = append(protocCmd.Environ(), protocPath)
 		protocCmd.Stderr = os.Stderr
 		protocCmd.Stdout = os.Stdout
 		err = protocCmd.Run()

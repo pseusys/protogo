@@ -125,7 +125,7 @@ func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 	}
 }
 
-func ensureGoPackageInstalled(goExecuteble, goBin, packagePrefix, packageName string) error {
+func ensureGoPackageInstalled(goExecutable, goBin, packagePrefix, packageName string) error {
 	packageExecutable := filepath.Join(goBin, packageName)
 
 	_, err := exec.LookPath(packageExecutable)
@@ -135,9 +135,9 @@ func ensureGoPackageInstalled(goExecuteble, goBin, packagePrefix, packageName st
 
 	packageUrl := fmt.Sprintf("%s/%s@latest", packagePrefix, packageName)
 	logrus.Debugf("Package %s is not installed, installing latest version from: %s", packageName, packageUrl)
-	cmd := exec.Command(goExecuteble, "install", packageUrl)
-	cmd.Env = append(cmd.Env, fmt.Sprintf("GOOS=%s", runtime.GOOS), fmt.Sprintf("GOARCH=%s", runtime.GOARCH))
-	output, err := cmd.Output()
+	cmd := exec.Command(goExecutable, "install", packageUrl)
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("GOOS=%s", runtime.GOOS), fmt.Sprintf("GOARCH=%s", runtime.GOARCH))
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error installing package %s: %v\n%s", packageName, err, string(output))
 	}
