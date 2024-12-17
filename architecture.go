@@ -16,9 +16,18 @@ const (
 	WIN64          = "win64"
 )
 
-// Check out protobuf releases for the list of supported version: https://github.com/protocolbuffers/protobuf/releases
-// Check out GO documentation for possible GOOS and GOARCH values: https://go.dev/doc/install/source#environment
-
+// Return a string identifying protoc release binary.
+// Return an error if there is no pre-compiled protoc binary for current OS and architecture.
+//
+// NB! Help needed! Maybe some other binaries are suitable for some other platforms - and maybe not!
+// I could only check on GitHub Actions hosted runners.
+//
+// Check out [protobuf releases] for the list of supported version.
+//
+// Check out [GO documentation] for possible GOOS and GOARCH values.
+//
+// [protobuf releases]: https://github.com/protocolbuffers/protobuf/releases
+// [GO documentation]: https://go.dev/doc/install/source#environment
 func getProtocOSandArch() (*string, error) {
 	var platform string
 	undefinedOS := false
