@@ -2,7 +2,7 @@
 //
 // The description of the pipeline being automated can be found on [official gRPC GO quickstart website].
 //
-// [official gRPC GO quickstart website]: https://grpc.io/docs/languages/go/quickstart/#prerequisites.
+// [official gRPC GO quickstart website]: https://grpc.io/docs/languages/go/quickstart/#prerequisites
 package main
 
 import (
