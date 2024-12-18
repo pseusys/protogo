@@ -1,4 +1,4 @@
-// Automated protoc compiler downloading and preparing environment, for use of GO with protobuf and gRPC.
+// Package provides automated protoc compiler downloading and preparing environment pipeline, for use of GO with protobuf and gRPC.
 //
 // The description of the pipeline being automated can be found on [official gRPC GO quickstart website].
 //
