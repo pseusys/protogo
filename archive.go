@@ -1,3 +1,7 @@
+// This whole file is based on the awesome [stackoverflow answer] by swtdrgn.
+//
+// [stackoverflow answer]: https://stackoverflow.com/a/24430720/9124072
+
 package main
 
 import (
@@ -6,16 +10,24 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func extractFile(reader io.ReadCloser, file *zip.File, path string) error {
-	var fdir string
-	if lastIndex := strings.LastIndex(path, string(os.PathSeparator)); lastIndex > -1 {
-		fdir = path[:lastIndex]
+// Extract a file from ZIP archive.
+// Make all the parent directories, if needed.
+//
+// Accept ZIP file and destination path.
+// Return error.
+func extractFile(file *zip.File, path string) error {
+	fdir := filepath.Dir(path)
+
+	reader, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("error opening object %s: %v", file.Name, err)
+	} else {
+		defer reader.Close()
 	}
 
-	err := os.MkdirAll(fdir, FULL_PERMISSIONS)
+	err = os.MkdirAll(fdir, FULL_PERMISSIONS)
 	if err != nil {
 		return fmt.Errorf("error making directory %s: %v", fdir, err)
 	}
@@ -35,23 +47,22 @@ func extractFile(reader io.ReadCloser, file *zip.File, path string) error {
 	return nil
 }
 
+// Extract any item from ZIP archive.
+// If it is a directory, create corresponding directory in the target location.
+// If it is a file, extract this file.
+//
+// Accept ZIP file and destination path.
+// Return error.
 func extractItem(file *zip.File, dest string) error {
-	rc, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("error opening object %s: %v", file.Name, err)
-	} else {
-		defer rc.Close()
-	}
-
 	fpath := filepath.Join(dest, file.Name)
 
 	if file.FileInfo().IsDir() {
-		err = os.MkdirAll(fpath, FULL_PERMISSIONS)
+		err := os.MkdirAll(fpath, FULL_PERMISSIONS)
 		if err != nil {
 			return fmt.Errorf("error making directory %s: %v", fpath, err)
 		}
 	} else {
-		err = extractFile(rc, file, fpath)
+		err := extractFile(file, fpath)
 		if err != nil {
 			return fmt.Errorf("error extracting file %s: %v", fpath, err)
 		}
@@ -60,6 +71,12 @@ func extractItem(file *zip.File, dest string) error {
 	return nil
 }
 
+// Extract ZIP archive.
+// Set current user permissions to all the extracted files and directories.
+// Replace any existing files, if they are found.
+//
+// Accept source ZIP archive path and destination extraction directory path.
+// Return error.
 func unzip(src, dest string) error {
 	reader, err := zip.OpenReader(src)
 	if err != nil {

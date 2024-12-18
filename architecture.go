@@ -16,15 +16,15 @@ const (
 	WIN64          = "win64"
 )
 
-// Return a string identifying protoc release binary.
-// Return an error if there is no pre-compiled protoc binary for current OS and architecture.
+// Determine the string identifying protoc release binary.
 //
 // NB! Help needed! Maybe some other binaries are suitable for some other platforms - and maybe not!
 // I could only check on GitHub Actions hosted runners.
 //
 // Check out [protobuf releases] for the list of supported version.
-//
 // Check out [GO documentation] for possible GOOS and GOARCH values.
+//
+// Return the platform string and error.
 //
 // [protobuf releases]: https://github.com/protocolbuffers/protobuf/releases
 // [GO documentation]: https://go.dev/doc/install/source#environment

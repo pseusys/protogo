@@ -18,6 +18,11 @@ const (
 	FULL_PERMISSIONS  = 0775
 )
 
+// Get GO environmental variable by running "go env ..." command.
+// Return empty string if not found.
+//
+// Accept GO executable path and environment variable name.
+// Return environment variable value and boolean flag, whether variable was found.
 func lookupGoEnv(goExecuteble, key string) (string, bool) {
 	cmd := exec.Command(goExecuteble, "env", key)
 	output, err := cmd.Output()
@@ -28,6 +33,11 @@ func lookupGoEnv(goExecuteble, key string) (string, bool) {
 	return strings.TrimSuffix(string(output), "\n"), true
 }
 
+// Find GO executable, either locally or by provided path.
+// Verify the executable exists.
+//
+// Accept custom GO executable path envieonment variable (or empty string if none).
+// Return verified GO executable pointer and error.
 func getGoExecutable(key string) (*string, error) {
 	var executable string
 
@@ -48,6 +58,13 @@ func getGoExecutable(key string) (*string, error) {
 	return &executable, nil
 }
 
+// Find GO binary directory location.
+// Just like "go inatall ..." [documentation] suggests, all possible binary locations are searched.
+//
+// Accept GO executable path.
+// Return GO binary directory path pointer and error.
+//
+// [documentation]: https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies
 func getGoBinaryLocation(goExecuteble string) (*string, error) {
 	var binary string
 
@@ -66,7 +83,15 @@ func getGoBinaryLocation(goExecuteble string) (*string, error) {
 	return &binary, nil
 }
 
-func getEnvCacheDir(key string) (*string, error) {
+// Get "protogo" package cache directory.
+// Is either specified by environmental variable or placed into [default cache directory].
+// Create the directory if it doesn't exist.
+//
+// Accept custom cache directory environment variable (or empty string if none).
+// Return cache directory path pointer and error.
+//
+// [default cache directory]: https://pkg.go.dev/os#UserCacheDir
+func getProtogoCacheDir(key string) (*string, error) {
 	var cacheDir string
 
 	if value, ok := os.LookupEnv(key); ok {
@@ -82,7 +107,7 @@ func getEnvCacheDir(key string) (*string, error) {
 	logrus.Debugf("Creating cache dir: %s", cacheDir)
 	err := os.MkdirAll(cacheDir, FULL_PERMISSIONS)
 	if err != nil {
-		return nil, fmt.Errorf("could not create cache directory in '~/.cache' root: %v", err)
+		return nil, fmt.Errorf("could not create cache directory in '%s' root: %v", cacheDir, err)
 	} else {
 		logrus.Debug("Cache dir created!")
 	}
@@ -90,6 +115,13 @@ func getEnvCacheDir(key string) (*string, error) {
 	return &cacheDir, nil
 }
 
+// Get cached protobuf compiler by version.
+// Resolve requested protobuf version, find out the exact version name for "latest".
+// Verify "protoc" is installed locally, if "local" is specified as version.
+// Search for the required version directory in cache otherwise.
+//
+// Accept protobuf compiler version environment variable (with or without "v" prefix, empty string if none) and cache root path.
+// Return version tag string pointer, cache directory for the given version (or nil for "local"), boolean flag, whether protoc binary should be downloaded, and error.
 func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 	var versionTag string
 
@@ -101,7 +133,7 @@ func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 
 	logrus.Debugf("Requested version tag is: %s", versionTag)
 	if versionTag == "latest" {
-		latestTag, err := getLatestProtocRelease()
+		latestTag, err := getLatestProtocReleaseTag()
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("latest protoc version tag couldn't be resolved: %v", err)
 		}
@@ -126,6 +158,13 @@ func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 	}
 }
 
+// Ensure GO binary (command) is installed locally.
+// Search for the package in the GO binary directory.
+// Install the package if it is not found (ensure correct GOOS and GOARCH during installation).
+// Search for the package in the GO binary directory again.
+//
+// Accept GO executable path, GO binary directory path, package prefix (without name) and package (command) name.
+// Return error.
 func ensureGoPackageInstalled(goExecutable, goBin, packagePrefix, packageName string) error {
 	packageExecutable := filepath.Join(goBin, packageName)
 

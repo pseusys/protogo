@@ -20,6 +20,14 @@ const (
 	PROTOC_BINARY_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/v%s/%s"
 )
 
+// Make GET HTTP request to GitHub API.
+// Add "Authorization: Bearer ..." header if "PROTOGO_GITHUB_BEARER_TOKEN" environmental variable is found.
+// Add "User-Agent" header for app authentication and "X-GitHub-Api-Version" for ensuring GitHub API version.
+// Add "Accept" header with either "application/octet-stream" or "application/vnd.github+json" depending on the "binary" argument vaule.
+// Send the request using the default HTTP client.
+//
+// Accept URL to make request to and boolean flag, whether binary or JSON response is expected.
+// Return HTTP response pointer and error.
 func makeGETRequestToGitHubAPI(url string, binary bool) (*http.Response, error) {
 	req, err := http.NewRequest(GET_HTTP, url, nil)
 	if err != nil {
@@ -50,7 +58,11 @@ func makeGETRequestToGitHubAPI(url string, binary bool) (*http.Response, error) 
 	return res, nil
 }
 
-func getLatestProtocRelease() (*string, error) {
+// Get latest protoc release tag, making GitHub API request.
+// Decode JSON response and extract "tag_name" value from it.
+//
+// Return latest tag string pointer and error.
+func getLatestProtocReleaseTag() (*string, error) {
 	logrus.Debugf("Downloading latest protoc release info: %s", LATEST_PROTOC_RELEASE)
 	resp, err := makeGETRequestToGitHubAPI(LATEST_PROTOC_RELEASE, false)
 	if err != nil {
@@ -80,6 +92,12 @@ func getLatestProtocRelease() (*string, error) {
 	}
 }
 
+// Download protoc compiler from GitHub releases, unpack it and save to the specified cache directory.
+// Use current package GOOS and GOARCH values for exact binary location.
+// Save downloaded archive to a temporary directory, remove it after unpacking.
+//
+// Accept protobuf compiler version (without "v" prefix) and cache directory to store compiler binaries.
+// Return compiler executable path pointer and error.
 func downloadProtocVersion(version, cacheDir string) (*string, error) {
 	platform, err := getProtocOSandArch()
 	if err != nil {

@@ -1,3 +1,7 @@
+// Automated protoc compiler downloading and preparing environment, for use of GO with protobuf and gRPC.
+// The description of the pipeline being automated can be found on [official gRPC GO quickstart website].
+//
+// [official gRPC GO quickstart website]: https://grpc.io/docs/languages/go/quickstart/#prerequisites.
 package main
 
 import (
@@ -16,6 +20,7 @@ const (
 	PROTOC_GEN_GO_GRPC_PREFIX  = "google.golang.org/grpc/cmd"
 )
 
+// `protogo` package help string.
 const HELP_TEXT = `    'protogo' is an automatization tool for Go + protobuf + gRPC builds!
 You can run it with the same arguments as 'go' executable, followed by '--' flag and then 'protoc' arguments.
 Protogo will handle everything else, including 'protoc' binaries installation, installing required packages, etc.
@@ -78,7 +83,7 @@ func main() {
 	}
 
 	logrus.Debug("Checking cache directory location...")
-	protogoCache, err := getEnvCacheDir("PROTOGO_CACHE")
+	protogoCache, err := getProtogoCacheDir("PROTOGO_CACHE")
 	if err != nil {
 		logrus.Fatalf("Could not find or create cache directory: %v", err)
 	} else {
