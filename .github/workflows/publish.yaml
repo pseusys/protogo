@@ -35,6 +35,8 @@ jobs:
 
       - name: Create Release 🆕
         uses: comnoco/create-release-action@v2.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ steps.latest-tag-changes.outputs.tag }}
