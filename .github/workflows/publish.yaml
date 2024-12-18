@@ -39,7 +39,6 @@ jobs:
         id: latest-tag-changes
         uses: simbo/changes-between-tags-action@v1
         with:
-          include-tag-commit: false
           include-hashes: false
 
       - name: Create Release 🆕
