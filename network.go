@@ -12,14 +12,47 @@ import (
 )
 
 const (
+	GET_HTTP              = "GET"
+	GITHUB_API_VERSION    = "2022-11-28"
+	GITHUB_AGENT_NAME     = "Protogo App"
 	PROTOC_ZIP_NAME       = "protoc-%s-%s.zip"
 	LATEST_PROTOC_RELEASE = "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest"
 	PROTOC_BINARY_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/v%s/%s"
 )
 
+func makeGETRequestToGitHubAPI(url string, binary bool) (*http.Response, error) {
+	req, err := http.NewRequest(GET_HTTP, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating http GET request to %s: %v", url, err)
+	}
+
+	if value, ok := os.LookupEnv("PROTOGO_GITHUB_BEARER_TOKEN"); ok {
+		logrus.Debugf("GitHub API authorization token set: %s", value)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", value))
+	} else {
+		logrus.Debug("GitHub API authorization token not set!")
+	}
+
+	req.Header.Set("X-GitHub-Api-Version", GITHUB_API_VERSION)
+	req.Header.Set("User-Agent", GITHUB_AGENT_NAME)
+
+	if binary {
+		req.Header.Set("Accept", "application/octet-stream")
+	} else {
+		req.Header.Set("Accept", "application/vnd.github+json")
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error executing http GET request to %s: %v", url, err)
+	}
+
+	return res, nil
+}
+
 func getLatestProtocRelease() (*string, error) {
-	logrus.Debugf("Downloading latest protoc release: %s", LATEST_PROTOC_RELEASE)
-	resp, err := http.Get(LATEST_PROTOC_RELEASE)
+	logrus.Debugf("Downloading latest protoc release info: %s", LATEST_PROTOC_RELEASE)
+	resp, err := makeGETRequestToGitHubAPI(LATEST_PROTOC_RELEASE, false)
 	if err != nil {
 		return nil, fmt.Errorf("reading latest protobuf release error: %v", err)
 	} else {
@@ -59,7 +92,7 @@ func downloadProtocVersion(version, cacheDir string) (*string, error) {
 	protocDownloadUrl := fmt.Sprintf(PROTOC_BINARY_URL, version, protocZip)
 
 	logrus.Debugf("Downloading protoc release: %s", protocDownloadUrl)
-	resp, err := http.Get(protocDownloadUrl)
+	resp, err := makeGETRequestToGitHubAPI(protocDownloadUrl, true)
 	if err != nil {
 		return nil, fmt.Errorf("accessing URL '%s' error: %v", protocDownloadUrl, err)
 	} else {

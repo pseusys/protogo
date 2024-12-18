@@ -30,4 +30,5 @@ You can additionally control it with the following environment variables:
   - `PROTOGO_PROTOC_VERSION`: defing `protoc` version to use, should match protobuf release tags, default: `latest`
       NB! If `local` is specified as `protoc` version, local installation will be used
   - `PROTOGO_CACHE`: define cache directory, where `protoc` executables will be stored, default: `~/.cache/protogo`
-  - `PROTOGO_LOG_LEVEL`: define logging level, the levels match [`logrus`](https://github.com/sirupsen/logrus) ones.
+  - `PROTOGO_GITHUB_BEARER_TOKEN`: GitHub authentication token for API requests (release assets retrieval)
+  - `PROTOGO_LOG_LEVEL`: define logging level, the levels match [`logrus`](https://github.com/sirupsen/logrus) ones

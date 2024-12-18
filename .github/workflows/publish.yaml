@@ -25,3 +25,19 @@ jobs:
         run: |
           go mod tidy
           go list -m github.com/pseusys/protogo@${{ github.ref_name }}
+
+      - name: Get Changes Between Tags 📋
+        id: latest-tag-changes
+        uses: simbo/changes-between-tags-action@v1
+        with:
+          include-tag-commit: false
+          include-hashes: false
+
+      - name: Create Release 🆕
+        uses: comnoco/create-release-action@v2.0.5
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.latest-tag-changes.outputs.tag }}
+          body: ${{ steps.latest-tag-changes.outputs.changes }}
+          draft: false
+          prerelease: false
