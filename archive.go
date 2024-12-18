@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Extract a file from ZIP archive.
@@ -86,6 +87,9 @@ func unzip(src, dest string) error {
 	}
 
 	for _, f := range reader.File {
+		if strings.Contains(f.Name, "..") {
+			return fmt.Errorf("malformed archive file path: %s", f.Name)
+		}
 		err = extractItem(f, dest)
 		if err != nil {
 			return fmt.Errorf("error extracting file %s: %v", f.Name, err)
