@@ -27,7 +27,7 @@ func makeGETRequestToGitHubAPI(url string, binary bool) (*http.Response, error) 
 	}
 
 	if value, ok := os.LookupEnv("PROTOGO_GITHUB_BEARER_TOKEN"); ok {
-		logrus.Debugf("GitHub API authorization token set: %s", value)
+		logrus.Debug("GitHub API authorization token set!")
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", value))
 	} else {
 		logrus.Debug("GitHub API authorization token not set!")
