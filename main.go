@@ -1,4 +1,5 @@
 // Automated protoc compiler downloading and preparing environment, for use of GO with protobuf and gRPC.
+//
 // The description of the pipeline being automated can be found on [official gRPC GO quickstart website].
 //
 // [official gRPC GO quickstart website]: https://grpc.io/docs/languages/go/quickstart/#prerequisites.
