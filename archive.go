@@ -55,7 +55,12 @@ func extractFile(file *zip.File, path string) error {
 // Accept ZIP file and destination path.
 // Return error.
 func extractItem(file *zip.File, dest string) error {
-	fpath := filepath.Join(dest, file.Name)
+	fpath, err := filepath.Abs(filepath.Join(dest, file.Name))
+	if err != nil {
+		return fmt.Errorf("error resolving path: %s", fpath)
+	} else if !strings.HasPrefix(fpath, dest) {
+		return fmt.Errorf("error extracting path: %s", fpath)
+	}
 
 	if file.FileInfo().IsDir() {
 		err := os.MkdirAll(fpath, FULL_PERMISSIONS)
@@ -87,9 +92,6 @@ func unzip(src, dest string) error {
 	}
 
 	for _, f := range reader.File {
-		if strings.Contains(f.Name, "..") {
-			return fmt.Errorf("malformed archive file path: %s", f.Name)
-		}
 		err = extractItem(f, dest)
 		if err != nil {
 			return fmt.Errorf("error extracting file %s: %v", f.Name, err)
