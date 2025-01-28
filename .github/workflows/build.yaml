@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build-protogo:
-    name: Test Protogo Across Different Architectures
+    name: Test Protogo Across Different OSs
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
