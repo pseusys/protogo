@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  list-package:
-    name: List Package To GO Package Registry
+  list-protogo:
+    name: List Protogo To GO Package Registry
     runs-on: ubuntu-latest
     permissions:
       contents: write
