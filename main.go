@@ -24,7 +24,7 @@ const (
 
 // `protogo` package help string.
 const HELP_TEXT = `    'protogo' is an automatization tool for Go + protobuf / flatbuffers + gRPC builds!
-You can run it with the same arguments as 'go' executable, followed by '--' flag and then compiler name ('protoc' or 'flatc'), followed by its arguments.
+You can run it with the same arguments as 'go' executable, followed by '--' flag and then compiler name ('protoc' or 'flatc') and its arguments.
 Protogo will handle everything else, including compiler binaries installation, installing required packages, etc.
 Use official gRPC installation guide as reference for protobuf: https://grpc.io/docs/languages/go/quickstart/#prerequisites.
 Use official gRPC installation guide as reference for flatbuffers: https://flatbuffers.dev/languages/go/.
@@ -35,7 +35,7 @@ You can additionally control it with the following environment variables:
       NB! If 'local' is specified as 'protoc' version, local installation will be used
   - PROTOGO_FLATC_VERSION: defing 'flatc' version to use, should match protobuf release tags, default: latest
       NB! If 'local' is specified as 'flatc' version, local installation will be used
-  - PROTOGO_FLATC_DISTRO: select distribution of 'flatc' for linux (can be 'g++' or 'clang', default 'g++')
+  - PROTOGO_FLATC_DISTRO: select distribution of 'flatc' for linux (can be either 'g++' or 'clang', default 'g++')
   - PROTOGO_CACHE: define cache directory, where 'protobuf' executables will be stored, default: ~/.cache/protogo
   - PROTOGO_GITHUB_BEARER_TOKEN: GitHub authentication token for API requests (release assets retrieval)
   - PROTOGO_LOG_LEVEL: define logging level, the levels match 'logrus' ones`

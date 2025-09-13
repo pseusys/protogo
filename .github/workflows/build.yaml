@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows", "ubuntu", "macos"]
+        compiler: ["protoc", "flatc"]
 
     steps:
       - name: Checkout 🛎️
@@ -37,5 +38,6 @@ jobs:
 
       - name: Run Protogo 🚀
         env:
+          COMPILER: ${{ matrix.compiler }}
           PROTOGO_GITHUB_BEARER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make run
+        run: make run COMPILER=${{ env.COMPILER }}

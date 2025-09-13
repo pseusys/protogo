@@ -24,6 +24,8 @@ const (
 	ADDITION_GCC   = ".g++-13"
 )
 
+// Convert executable name to platform-specific file name.
+// Made for Windows support primarily.
 func getExecutableName(executable string) string {
 	switch runtime.GOOS {
 	case "windows":
@@ -95,6 +97,18 @@ func getProtocOSandArch() (*string, error) {
 	return &platform, nil
 }
 
+// Determine the string identifying flatc release binary.
+//
+// NB! Help needed! Maybe some other binaries are suitable for some other platforms - and maybe not!
+// I could only check on GitHub Actions hosted runners.
+//
+// Check out [flatc releases] for the list of supported version.
+// Check out [GO documentation] for possible GOOS and GOARCH values.
+//
+// Return the platform name (which is OS name and architecture), optional additional element of archive name and error.
+//
+// [GO documentation]: https://go.dev/doc/install/source#environment
+// [flatc releases]: https://github.com/google/flatbuffers/releases
 func getFlatcOSandAddition() (*string, string, error) {
 	var system string
 	undefinedOS := false

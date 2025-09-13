@@ -6,9 +6,9 @@ PROTOGO_LOG_LEVEL := DEBUG
 PROTOGO_CACHE := ./temp/
 
 GO_ARGS := version
-COMPILER := flatc
+COMPILER := protoc
 COMPILER_ARGS := --version
-PROTOGO_ARGS := ${GO_ARGS} -- ${COMPILER} ${PROTOC_ARGS}
+PROTOGO_ARGS := ${GO_ARGS} -- ${COMPILER} ${COMPILER_ARGS}
 
 
 build:
