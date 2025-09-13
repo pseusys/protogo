@@ -14,8 +14,9 @@ import (
 
 const (
 	GO_EXECUTABLE     = "go"
+	NONE_EXECUTABLE   = ""
 	PROTOC_EXECUTABLE = "protoc"
-	FULL_PERMISSIONS  = 0775
+	FLATC_EXECUTABLE  = "flatc"
 )
 
 // Get GO environmental variable by running "go env ..." command.
@@ -44,7 +45,7 @@ func getGoExecutable(key string) (*string, error) {
 	if value, ok := os.LookupEnv(key); ok {
 		executable = value
 	} else {
-		executable = GO_EXECUTABLE
+		executable = getExecutableName(GO_EXECUTABLE)
 	}
 
 	logrus.Debugf("Looking up for GO executable: %s", executable)
@@ -59,7 +60,7 @@ func getGoExecutable(key string) (*string, error) {
 }
 
 // Find GO binary directory location.
-// Just like "go inatall ..." [documentation] suggests, all possible binary locations are searched.
+// Just like "go install ..." [documentation] suggests, all possible binary locations are searched.
 //
 // Accept GO executable path.
 // Return GO binary directory path pointer and error.
@@ -105,7 +106,7 @@ func getProtogoCacheDir(key string) (*string, error) {
 	}
 
 	logrus.Debugf("Creating cache dir: %s", cacheDir)
-	err := os.MkdirAll(cacheDir, FULL_PERMISSIONS)
+	err := os.MkdirAll(cacheDir, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("could not create cache directory in '%s' root: %v", cacheDir, err)
 	} else {
@@ -132,13 +133,14 @@ func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 	}
 
 	logrus.Debugf("Requested version tag is: %s", versionTag)
-	if versionTag == "latest" {
+	switch versionTag {
+	case "latest":
 		latestTag, err := getLatestProtocReleaseTag()
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("latest protoc version tag couldn't be resolved: %v", err)
 		}
 		versionTag = *latestTag
-	} else if versionTag == "local" {
+	case "local":
 		_, err := exec.LookPath(PROTOC_EXECUTABLE)
 		if err != nil {
 			return nil, nil, false, fmt.Errorf("protoc executable couldn't be found: %v", err)
@@ -148,13 +150,59 @@ func getProtocCache(key, cacheDir string) (*string, *string, bool, error) {
 	}
 
 	versionTag = strings.TrimPrefix(versionTag, "v")
-	protoCache := filepath.Join(cacheDir, fmt.Sprintf("protoc-%s", versionTag))
+	protocCache := filepath.Join(cacheDir, fmt.Sprintf("protoc-%s", versionTag))
+	protocExec := filepath.Join(protocCache, "bin", getExecutableName(PROTOC_EXECUTABLE))
 
-	dir, err := os.Stat(protoCache)
-	if err != nil || !dir.IsDir() {
-		return &versionTag, &protoCache, true, nil
+	_, err := os.Stat(protocExec)
+	if err != nil {
+		return &versionTag, &protocCache, true, nil
 	} else {
-		return &versionTag, &protoCache, false, nil
+		return &versionTag, &protocCache, false, nil
+	}
+}
+
+// Get cached flatbuffers compiler by version.
+// Resolve requested flatbuffers version, find out the exact version name for "latest".
+// Verify "flatc" is installed locally, if "local" is specified as version.
+// Search for the required version directory in cache otherwise.
+//
+// Accept flatbuffers compiler version environment variable (with or without "v" prefix, empty string if none) and cache root path.
+// Return version tag string pointer, cache directory for the given version (or nil for "local"), boolean flag, whether flatc binary should be downloaded, and error.
+func getFlatcCache(key, cacheDir string) (*string, *string, bool, error) {
+	var versionTag string
+
+	if value, ok := os.LookupEnv(key); ok {
+		versionTag = value
+	} else {
+		versionTag = "latest"
+	}
+
+	logrus.Debugf("Requested version tag is: %s", versionTag)
+	switch versionTag {
+	case "latest":
+		latestTag, err := getLatestFlatcReleaseTag()
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("latest flatc version tag couldn't be resolved: %v", err)
+		}
+		versionTag = *latestTag
+	case "local":
+		_, err := exec.LookPath(FLATC_EXECUTABLE)
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("flatc executable couldn't be found: %v", err)
+		} else {
+			return &versionTag, nil, false, nil
+		}
+	}
+
+	versionTag = strings.TrimPrefix(versionTag, "v")
+	flatcCache := filepath.Join(cacheDir, fmt.Sprintf("flatc-%s", versionTag))
+	flatcExec := filepath.Join(flatcCache, getExecutableName(FLATC_EXECUTABLE))
+
+	dir, err := os.Stat(flatcExec)
+	if err != nil || !dir.IsDir() {
+		return &versionTag, &flatcCache, true, nil
+	} else {
+		return &versionTag, &flatcCache, false, nil
 	}
 }
 

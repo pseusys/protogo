@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 )
 
@@ -14,7 +15,23 @@ const (
 	OSX_UNIVERSAL  = "osx-universal_binary"
 	WIN32          = "win32"
 	WIN64          = "win64"
+
+	LINUX_ANY      = "Linux"
+	MAC            = "Mac"
+	MAC_INTEL      = "MacIntel"
+	WINDOWS        = "Windows"
+	ADDITION_CLANG = ".clang++-18"
+	ADDITION_GCC   = ".g++-13"
 )
+
+func getExecutableName(executable string) string {
+	switch runtime.GOOS {
+	case "windows":
+		return fmt.Sprintf("%s.exe", executable)
+	default:
+		return executable
+	}
+}
 
 // Determine the string identifying protoc release binary.
 //
@@ -33,35 +50,39 @@ func getProtocOSandArch() (*string, error) {
 	undefinedOS := false
 	undefinedArchitecture := false
 
-	if runtime.GOOS == "linux" {
-		if runtime.GOARCH == "amd64" {
+	switch runtime.GOOS {
+	case "linux":
+		switch runtime.GOARCH {
+		case "amd64":
 			platform = LINUX_AMD64
-		} else if runtime.GOARCH == "386" {
+		case "386":
 			platform = LINUX_AMD32
-		} else if runtime.GOARCH == "s390x" {
+		case "s390x":
 			platform = LINUX_390_64
-		} else if runtime.GOARCH == "ppc64le" {
+		case "ppc64le":
 			platform = LINUX_PPCLE_64
-		} else if runtime.GOARCH == "arm64" {
+		case "arm64":
 			platform = LINUX_ARM64
-		} else {
+		default:
 			undefinedArchitecture = true
 		}
-	} else if runtime.GOOS == "darwin" {
-		if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
+	case "darwin":
+		switch runtime.GOARCH {
+		case "amd64", "arm64":
 			platform = OSX_UNIVERSAL
-		} else {
+		default:
 			undefinedArchitecture = true
 		}
-	} else if runtime.GOOS == "windows" {
-		if runtime.GOARCH == "386" || runtime.GOARCH == "arm" {
+	case "windows":
+		switch runtime.GOARCH {
+		case "386", "arm":
 			platform = WIN32
-		} else if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
+		case "amd64", "arm64":
 			platform = WIN64
-		} else {
+		default:
 			undefinedArchitecture = true
 		}
-	} else {
+	default:
 		undefinedOS = true
 	}
 
@@ -72,4 +93,47 @@ func getProtocOSandArch() (*string, error) {
 	}
 
 	return &platform, nil
+}
+
+func getFlatcOSandAddition() (*string, string, error) {
+	var system string
+	undefinedOS := false
+	undefinedArchitecture := false
+
+	addition := ""
+	switch runtime.GOOS {
+	case "linux":
+		system = LINUX_ANY
+		if value, ok := os.LookupEnv("PROTOGO_FLATC_DISTRO"); ok {
+			switch value {
+			case "g++":
+				addition = ADDITION_GCC
+			case "clang":
+				addition = ADDITION_CLANG
+			}
+		} else {
+			addition = ADDITION_GCC
+		}
+	case "darwin":
+		switch runtime.GOARCH {
+		case "amd64":
+			system = MAC_INTEL
+		case "arm64":
+			system = MAC
+		default:
+			undefinedArchitecture = true
+		}
+	case "windows":
+		system = WINDOWS
+	default:
+		undefinedOS = true
+	}
+
+	if undefinedOS {
+		return nil, addition, fmt.Errorf("the OS '%s' is either not supported by protogo or there are no protobuf binaries distributed for it", runtime.GOOS)
+	} else if undefinedArchitecture {
+		return nil, addition, fmt.Errorf("the architecture '%s' is either not supported by protogo or there are no protobuf binaries distributed for it", runtime.GOARCH)
+	}
+
+	return &system, addition, nil
 }

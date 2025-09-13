@@ -28,12 +28,12 @@ func extractFile(file *zip.File, path string) error {
 		defer reader.Close()
 	}
 
-	err = os.MkdirAll(fdir, FULL_PERMISSIONS)
+	err = os.MkdirAll(fdir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("error making directory %s: %v", fdir, err)
 	}
 
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FULL_PERMISSIONS)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("error opening file %s: %v", path, err)
 	} else {
@@ -58,12 +58,12 @@ func extractItem(file *zip.File, dest string) error {
 	fpath, err := filepath.Abs(filepath.Join(dest, file.Name))
 	if err != nil {
 		return fmt.Errorf("error resolving path: %s", fpath)
-	} else if !strings.HasPrefix(fpath, dest) {
-		return fmt.Errorf("error extracting path: %s", fpath)
+	} else if !strings.Contains(fpath, dest) {
+		return fmt.Errorf("error extracting path: %s (%v)", fpath, dest)
 	}
 
 	if file.FileInfo().IsDir() {
-		err := os.MkdirAll(fpath, FULL_PERMISSIONS)
+		err := os.MkdirAll(fpath, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error making directory %s: %v", fpath, err)
 		}

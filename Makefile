@@ -3,11 +3,12 @@
 .DEFAULT_GOAL := help
 
 PROTOGO_LOG_LEVEL := DEBUG
+PROTOGO_CACHE := ./temp/
 
 GO_ARGS := version
-PROTOC_ARGS := --version
-
-PROTOGO_ARGS := ${GO_ARGS} -- ${PROTOC_ARGS}
+COMPILER := flatc
+COMPILER_ARGS := --version
+PROTOGO_ARGS := ${GO_ARGS} -- ${COMPILER} ${PROTOC_ARGS}
 
 
 build:

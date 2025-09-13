@@ -18,6 +18,9 @@ const (
 	PROTOC_ZIP_NAME       = "protoc-%s-%s.zip"
 	LATEST_PROTOC_RELEASE = "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest"
 	PROTOC_BINARY_URL     = "https://github.com/protocolbuffers/protobuf/releases/download/v%s/%s"
+	FLATC_ZIP_NAME        = "%s.flatc.binary%s.zip"
+	LATEST_FLATC_RELEASE  = "https://api.github.com/repos/google/flatbuffers/releases/latest"
+	FLATC_BINARY_URL      = "https://github.com/google/flatbuffers/releases/download/v%s/%s"
 )
 
 // Make GET HTTP request to GitHub API.
@@ -72,7 +75,7 @@ func getLatestProtocReleaseTag() (*string, error) {
 	}
 
 	logrus.Debug("Decoding latest protoc release JSON...")
-	var responseJSON map[string]interface{}
+	var responseJSON map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&responseJSON)
 	if err != nil {
 		return nil, fmt.Errorf("latest protobuf release info parsing error: %v", err)
@@ -89,6 +92,40 @@ func getLatestProtocReleaseTag() (*string, error) {
 		return &tagName, nil
 	} else {
 		return nil, fmt.Errorf("latest protobuf release info 'tag_name' field is not string, but: %v", tag)
+	}
+}
+
+// Get latest flatc release tag, making GitHub API request.
+// Decode JSON response and extract "tag_name" value from it.
+//
+// Return latest tag string pointer and error.
+func getLatestFlatcReleaseTag() (*string, error) {
+	logrus.Debugf("Downloading latest flatc release info: %s", LATEST_FLATC_RELEASE)
+	resp, err := makeGETRequestToGitHubAPI(LATEST_FLATC_RELEASE, false)
+	if err != nil {
+		return nil, fmt.Errorf("reading latest flatbuffers release error: %v", err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	logrus.Debug("Decoding latest flatc release JSON...")
+	var responseJSON map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&responseJSON)
+	if err != nil {
+		return nil, fmt.Errorf("latest flatbuffers release info parsing error: %v", err)
+	}
+
+	logrus.Debug("Decoding latest flatc release version...")
+	tag, ok := responseJSON["tag_name"]
+	if !ok {
+		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' not found in: %s", responseJSON)
+	}
+
+	logrus.Debug("Extracting version string...")
+	if tagName, ok := tag.(string); ok {
+		return &tagName, nil
+	} else {
+		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' field is not string, but: %v", tag)
 	}
 }
 
@@ -144,6 +181,62 @@ func downloadProtocVersion(version, cacheDir string) (*string, error) {
 		logrus.Debugf("Protoc archive extracted successfully to: %s", cacheDir)
 	}
 
-	protocExec := filepath.Join(cacheDir, "bin", PROTOC_EXECUTABLE)
+	protocExec := filepath.Join(cacheDir, "bin", getExecutableName(PROTOC_EXECUTABLE))
 	return &protocExec, nil
+}
+
+// Download flatc compiler from GitHub releases, unpack it and save to the specified cache directory.
+// Use current package GOOS and GOARCH values for exact binary location.
+// Save downloaded archive to a temporary directory, remove it after unpacking.
+//
+// Accept flatbuffers compiler version (without "v" prefix) and cache directory to store compiler binaries.
+// Return compiler executable path pointer and error.
+func downloadFlatcVersion(version, cacheDir string) (*string, error) {
+	system, addition, err := getFlatcOSandAddition()
+	if err != nil {
+		return nil, fmt.Errorf("error parsing current OS and architecture: %v", err)
+	} else {
+		logrus.Debugf("Current flatc architecture: %s (%s)", *system, addition)
+	}
+
+	flatcZip := fmt.Sprintf(FLATC_ZIP_NAME, *system, addition)
+	flatcDownloadUrl := fmt.Sprintf(FLATC_BINARY_URL, version, flatcZip)
+
+	logrus.Debugf("Downloading flatc release: %s", flatcDownloadUrl)
+	resp, err := makeGETRequestToGitHubAPI(flatcDownloadUrl, true)
+	if err != nil {
+		return nil, fmt.Errorf("accessing URL '%s' error: %v", flatcDownloadUrl, err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	flatcArchive := filepath.Join(os.TempDir(), flatcZip)
+
+	logrus.Debugf("Creating flatc archive: %s", flatcArchive)
+	out, err := os.Create(flatcArchive)
+	if err != nil {
+		return nil, fmt.Errorf("creating file '%s' error: %v", flatcArchive, err)
+	} else {
+		defer out.Close()
+		defer os.Remove(flatcArchive)
+	}
+
+	logrus.Debugf("Populating flatc archive: %s", flatcArchive)
+	n, err := io.Copy(out, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("response copying error: %v", err)
+	} else {
+		logrus.Debugf("Downloaded file '%s' %d bytes successfully!", flatcZip, n)
+	}
+
+	logrus.Debugf("Unzipping flatc archive: %s", flatcArchive)
+	err = unzip(flatcArchive, cacheDir)
+	if err != nil {
+		return nil, fmt.Errorf("flatc archive unzipping error: %v", err)
+	} else {
+		logrus.Debugf("Flatc archive extracted successfully to: %s", cacheDir)
+	}
+
+	flatcExec := filepath.Join(cacheDir, getExecutableName(FLATC_EXECUTABLE))
+	return &flatcExec, nil
 }
