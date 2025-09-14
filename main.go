@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -23,7 +24,7 @@ const (
 )
 
 // `protogo` package help string.
-const HELP_TEXT = `    'protogo' is an automatization tool for Go + protobuf / flatbuffers + gRPC builds!
+const HELP_TEXT = `    'protogo' is an automatization tool for Go + protobuf/flatbuffers + gRPC builds!
 You can run it with the same arguments as 'go' executable, followed by '--' flag and then compiler name ('protoc' or 'flatc') and its arguments.
 Protogo will handle everything else, including compiler binaries installation, installing required packages, etc.
 Use official gRPC installation guide as reference for protobuf: https://grpc.io/docs/languages/go/quickstart/#prerequisites.
@@ -31,10 +32,11 @@ Use official gRPC installation guide as reference for flatbuffers: https://flatb
 Inspired by similar projects for other languages, including https://pypi.org/project/protoc-exe/ and https://crates.io/crates/protoc-prebuilt/.
 You can additionally control it with the following environment variables:
   - PROTOGO_GO_EXECUTABLE: define 'go' executable to use, default: go
-  - PROTOGO_PROTOC_VERSION: defing 'protoc' version to use, should match protobuf release tags, default: latest
+  - PROTOGO_PROTOC_VERSION: define 'protoc' version to use, should match protobuf release tags, default: latest
       NB! If 'local' is specified as 'protoc' version, local installation will be used
-  - PROTOGO_FLATC_VERSION: defing 'flatc' version to use, should match protobuf release tags, default: latest
+  - PROTOGO_FLATC_VERSION: defins 'flatc' version to use, should match protobuf release tags, default: latest
       NB! If 'local' is specified as 'flatc' version, local installation will be used
+  - PROTOGO_PROTOC_INCLUDE: comma-separated list of "special" includes, can include 'standard' (for standard types) and 'googleapis'
   - PROTOGO_FLATC_DISTRO: select distribution of 'flatc' for linux (can be either 'g++' or 'clang', default 'g++')
   - PROTOGO_CACHE: define cache directory, where 'protobuf' executables will be stored, default: ~/.cache/protogo
   - PROTOGO_GITHUB_BEARER_TOKEN: GitHub authentication token for API requests (release assets retrieval)
@@ -103,6 +105,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	includeProtoStandard := false
+	includeProtoGoogleAPIs := false
+	if value, ok := os.LookupEnv("PROTOGO_PROTOC_INCLUDE"); ok && compiler == PROTOC_EXECUTABLE {
+		includes := strings.Split(value, ",")
+		includeProtoStandard = slices.Contains(includes, "standard")
+		includeProtoGoogleAPIs = slices.Contains(includes, "googleapis")
+	}
+
 	logrus.Debug("Checking cache directory location...")
 	protogoCache, err := getProtogoCacheDir("PROTOGO_CACHE")
 	if err != nil {
@@ -137,7 +147,7 @@ func main() {
 		} else if protocCache != nil {
 			logrus.Debugf("Protoc version requested: %s, cache location: %s, will be downloaded: %t", *protocTag, *protocCache, shouldDownload)
 		} else {
-			logrus.Debugf("Protoc version requested: %s, system default, will be downloaded: %t", *protocTag, shouldDownload)
+			logrus.Debugf("Protoc version requested: %s, system default, will not be downloaded", *protocTag)
 		}
 
 		if shouldDownload {
@@ -178,7 +188,7 @@ func main() {
 		} else if flatcCache != nil {
 			logrus.Debugf("Flatc version requested: %s, cache location: %s, will be downloaded: %t", *flatcTag, *flatcCache, shouldDownload)
 		} else {
-			logrus.Debugf("Flatc version requested: %s, system default, will be downloaded: %t", *flatcTag, shouldDownload)
+			logrus.Debugf("Flatc version requested: %s, system default, will not be downloaded", *flatcTag)
 		}
 
 		if shouldDownload {
@@ -201,9 +211,41 @@ func main() {
 		logrus.Debug("No compiler supplied, so installation skipped!")
 	}
 
+	var googleAPIsPath string
+	if includeProtoGoogleAPIs {
+		logrus.Debug("Extracting required Google APIs version...")
+		googleAPIsCache, shouldDownload, err := getGoogleAPIsCache(*protogoCache)
+		if err != nil {
+			logrus.Fatalf("Could not find or load Google APIs library: %v", err)
+		} else {
+			logrus.Debugf("Google APIs requested, cache location: %s, will be downloaded: %t", googleAPIsCache, shouldDownload)
+		}
+
+		if shouldDownload {
+			logrus.Debug("Downloading Google APIs library...")
+			googleAPIs, err := downloadGoogleAPIsVersion(googleAPIsCache)
+			if err != nil {
+				logrus.Fatalf("Could not download or extract Google APIs library: %v", err)
+			}
+			googleAPIsPath = *googleAPIs
+			logrus.Debugf("Google APIs library downloaded to: %s", googleAPIsPath)
+		} else {
+			googleAPIsPath = filepath.Join(googleAPIsCache, GOOGLEAPIS_DIR_NAME)
+			logrus.Debugf("Google APIs library found at: %s", googleAPIsPath)
+		}
+	}
+
 	if len(compilerArgs) > 0 {
 		compilerPath := fmt.Sprintf("PATH=%s%c%s", os.Getenv("PATH"), os.PathListSeparator, *goBin)
 		logrus.Debugf("Compiler will be executed with following PATH: %s", compilerPath)
+
+		if includeProtoStandard {
+			protocIncludePath := filepath.Join(filepath.Dir(compilerExecutable), "include")
+			compilerArgs = append([]string{fmt.Sprintf("-I=\"%s\"", protocIncludePath)}, compilerArgs...)
+		}
+		if includeProtoGoogleAPIs {
+			compilerArgs = append([]string{fmt.Sprintf("-I=\"%s\"", googleAPIsPath)}, compilerArgs...)
+		}
 
 		logrus.Debugf("Running compiler command: %s %v", compilerExecutable, compilerArgs)
 		compilerCmd := exec.Command(compilerExecutable, compilerArgs...)

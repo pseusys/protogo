@@ -8,6 +8,7 @@ PROTOGO_CACHE := ./temp/
 GO_ARGS := version
 COMPILER := protoc
 COMPILER_ARGS := --version
+PROTOGO_PROTOC_INCLUDE := standard,googleapis
 PROTOGO_ARGS := ${GO_ARGS} -- ${COMPILER} ${COMPILER_ARGS}
 
 

@@ -198,11 +198,25 @@ func getFlatcCache(key, cacheDir string) (*string, *string, bool, error) {
 	flatcCache := filepath.Join(cacheDir, fmt.Sprintf("flatc-%s", versionTag))
 	flatcExec := filepath.Join(flatcCache, getExecutableName(FLATC_EXECUTABLE))
 
-	dir, err := os.Stat(flatcExec)
-	if err != nil || !dir.IsDir() {
+	_, err := os.Stat(flatcExec)
+	if err != nil {
 		return &versionTag, &flatcCache, true, nil
 	} else {
 		return &versionTag, &flatcCache, false, nil
+	}
+}
+
+// Get cached Google APIs library.
+// Search for the required directory in cache.
+//
+// Return cache directory for the given version (or nil for "local"), boolean flag, whether Google APIs library should be downloaded, and error.
+func getGoogleAPIsCache(cacheDir string) (string, bool, error) {
+	flatcCache := filepath.Join(cacheDir, "googleapis")
+	dir, err := os.Stat(flatcCache)
+	if err != nil || !dir.IsDir() {
+		return flatcCache, true, nil
+	} else {
+		return flatcCache, false, nil
 	}
 }
 

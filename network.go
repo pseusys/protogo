@@ -21,6 +21,8 @@ const (
 	FLATC_ZIP_NAME        = "%s.flatc.binary%s.zip"
 	LATEST_FLATC_RELEASE  = "https://api.github.com/repos/google/flatbuffers/releases/latest"
 	FLATC_BINARY_URL      = "https://github.com/google/flatbuffers/releases/download/v%s/%s"
+	GOOGLEAPIS_BINARY_URL = "https://github.com/googleapis/api-common-protos/archive/refs/heads/main.zip"
+	GOOGLEAPIS_DIR_NAME   = "api-common-protos-main"
 )
 
 // Make GET HTTP request to GitHub API.
@@ -95,40 +97,6 @@ func getLatestProtocReleaseTag() (*string, error) {
 	}
 }
 
-// Get latest flatc release tag, making GitHub API request.
-// Decode JSON response and extract "tag_name" value from it.
-//
-// Return latest tag string pointer and error.
-func getLatestFlatcReleaseTag() (*string, error) {
-	logrus.Debugf("Downloading latest flatc release info: %s", LATEST_FLATC_RELEASE)
-	resp, err := makeGETRequestToGitHubAPI(LATEST_FLATC_RELEASE, false)
-	if err != nil {
-		return nil, fmt.Errorf("reading latest flatbuffers release error: %v", err)
-	} else {
-		defer resp.Body.Close()
-	}
-
-	logrus.Debug("Decoding latest flatc release JSON...")
-	var responseJSON map[string]any
-	err = json.NewDecoder(resp.Body).Decode(&responseJSON)
-	if err != nil {
-		return nil, fmt.Errorf("latest flatbuffers release info parsing error: %v", err)
-	}
-
-	logrus.Debug("Decoding latest flatc release version...")
-	tag, ok := responseJSON["tag_name"]
-	if !ok {
-		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' not found in: %s", responseJSON)
-	}
-
-	logrus.Debug("Extracting version string...")
-	if tagName, ok := tag.(string); ok {
-		return &tagName, nil
-	} else {
-		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' field is not string, but: %v", tag)
-	}
-}
-
 // Download protoc compiler from GitHub releases, unpack it and save to the specified cache directory.
 // Use current package GOOS and GOARCH values for exact binary location.
 // Save downloaded archive to a temporary directory, remove it after unpacking.
@@ -185,6 +153,40 @@ func downloadProtocVersion(version, cacheDir string) (*string, error) {
 	return &protocExec, nil
 }
 
+// Get latest flatc release tag, making GitHub API request.
+// Decode JSON response and extract "tag_name" value from it.
+//
+// Return latest tag string pointer and error.
+func getLatestFlatcReleaseTag() (*string, error) {
+	logrus.Debugf("Downloading latest flatc release info: %s", LATEST_FLATC_RELEASE)
+	resp, err := makeGETRequestToGitHubAPI(LATEST_FLATC_RELEASE, false)
+	if err != nil {
+		return nil, fmt.Errorf("reading latest flatbuffers release error: %v", err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	logrus.Debug("Decoding latest flatc release JSON...")
+	var responseJSON map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&responseJSON)
+	if err != nil {
+		return nil, fmt.Errorf("latest flatbuffers release info parsing error: %v", err)
+	}
+
+	logrus.Debug("Decoding latest flatc release version...")
+	tag, ok := responseJSON["tag_name"]
+	if !ok {
+		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' not found in: %s", responseJSON)
+	}
+
+	logrus.Debug("Extracting version string...")
+	if tagName, ok := tag.(string); ok {
+		return &tagName, nil
+	} else {
+		return nil, fmt.Errorf("latest flatbuffers release info 'tag_name' field is not string, but: %v", tag)
+	}
+}
+
 // Download flatc compiler from GitHub releases, unpack it and save to the specified cache directory.
 // Use current package GOOS and GOARCH values for exact binary location.
 // Save downloaded archive to a temporary directory, remove it after unpacking.
@@ -239,4 +241,51 @@ func downloadFlatcVersion(version, cacheDir string) (*string, error) {
 
 	flatcExec := filepath.Join(cacheDir, getExecutableName(FLATC_EXECUTABLE))
 	return &flatcExec, nil
+}
+
+// Download Google APIs library from GitHub main branch, unpack it and save to the specified cache directory.
+// Save downloaded archive to a temporary directory, remove it after unpacking.
+//
+// Accept cache directory to store compiler binaries.
+// Return Google APIs library path pointer and error.
+func downloadGoogleAPIsVersion(cacheDir string) (*string, error) {
+	googleAPIsArchiveName := fmt.Sprintf("%s.zip", GOOGLEAPIS_DIR_NAME)
+
+	logrus.Debugf("Downloading Google APIs library release: %s", GOOGLEAPIS_BINARY_URL)
+	resp, err := makeGETRequestToGitHubAPI(GOOGLEAPIS_BINARY_URL, true)
+	if err != nil {
+		return nil, fmt.Errorf("accessing URL '%s' error: %v", GOOGLEAPIS_BINARY_URL, err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	googleAPIsArchive := filepath.Join(os.TempDir(), googleAPIsArchiveName)
+
+	logrus.Debugf("Creating Google APIs library archive: %s", googleAPIsArchive)
+	out, err := os.Create(googleAPIsArchive)
+	if err != nil {
+		return nil, fmt.Errorf("creating file '%s' error: %v", googleAPIsArchive, err)
+	} else {
+		defer out.Close()
+		defer os.Remove(googleAPIsArchive)
+	}
+
+	logrus.Debugf("Populating Google APIs library archive: %s", googleAPIsArchive)
+	n, err := io.Copy(out, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("response copying error: %v", err)
+	} else {
+		logrus.Debugf("Downloaded file '%s' %d bytes successfully!", googleAPIsArchiveName, n)
+	}
+
+	logrus.Debugf("Unzipping Google APIs library archive: %s", googleAPIsArchive)
+	err = unzip(googleAPIsArchive, cacheDir)
+	if err != nil {
+		return nil, fmt.Errorf("Google APIs library archive unzipping error: %v", err)
+	} else {
+		logrus.Debugf("Google APIs library archive extracted successfully to: %s", cacheDir)
+	}
+
+	googleAPIsDir := filepath.Join(cacheDir, GOOGLEAPIS_DIR_NAME)
+	return &googleAPIsDir, nil
 }
