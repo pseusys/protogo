@@ -26,8 +26,6 @@ Compiler executable (denoted as `[COMPILER_NAME]`, either `protoc` or `flatc`) w
 Protogo will handle everything else, including `protoc`/`flatc` binaries installation, installing required packages, etc.
 Use [official gRPC installation guide](https://grpc.io/docs/languages/go/quickstart/#prerequisites) as reference.
 
-> Originally, a part of [`SeasideVPN`](https://github.com/pseusys/SeasideVPN) project.
-
 Inspired by similar projects for other languages, including (but not limited to) [`protoc-exe`](https://pypi.org/project/protoc-exe/) and [`protoc-prebuilt`](https://crates.io/crates/protoc-prebuilt/).
 
 You can additionally control it with the following environment variables:
